@@ -35,3 +35,20 @@ export const login = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+export const updateProfilePic = async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+  
+      if (req.file) {
+        const upload = await require("../utils/cloudinary").uploader.upload(req.file.path);
+        user.profilePic = upload.secure_url;
+        await user.save();
+      }
+  
+      res.json({ profilePic: user.profilePic });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
+  

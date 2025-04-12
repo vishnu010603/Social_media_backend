@@ -1,6 +1,6 @@
 import express from "express";
 import auth from "../middlewares/auth.middleware.js";
-import upload from "../utils/multer.js";
+import upload from "../utils/multer.utils.js";
 import {
     createPost,
     getPosts,

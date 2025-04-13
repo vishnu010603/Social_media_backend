@@ -1,23 +1,49 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import cloudinary from "../utils/cloudinary.utils.js";
 
 export const signup = async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
-        const exists = await User.findOne({ email });
-        if (exists) return res.status(400).json({ message: "User already exists" });
+  try {
+    const { name, email, password } = req.body;
+    
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(400).json({ message: "User already exists" });
 
-        const hashed = await bcrypt.hash(password, 10);
-        const newUser = await User.create({ name, email, password: hashed });
+    const hashed = await bcrypt.hash(password, 10);
 
-        const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    let profilePicUrl = "";
 
-        res.status(201).json({ token, user: { id: newUser._id, name, email, profilePic: newUser.profilePic } });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    if (req.file) {
+      const upload = await cloudinary.uploader.upload(req.file.path);
+      profilePicUrl = upload.secure_url;
     }
+
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashed,
+      profilePic: profilePicUrl,
+    });
+
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.status(201).json({
+      token,
+      user: {
+        id: newUser._id,
+        name,
+        email,
+        profilePic: newUser.profilePic,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err });
+  }
 };
+
 
 export const login = async (req, res) => {
     try {
@@ -41,7 +67,7 @@ export const updateProfilePic = async (req, res) => {
       const user = await User.findById(req.user.id);
   
       if (req.file) {
-        const upload = await require("../utils/cloudinary").uploader.upload(req.file.path);
+        const upload = await cloudinary.uploader.upload(req.file.path);
         user.profilePic = upload.secure_url;
         await user.save();
       }

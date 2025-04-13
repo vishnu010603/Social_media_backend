@@ -69,19 +69,24 @@ export const updatePost = async (req, res) => {
 };
 
 export const deletePost = async (req, res) => {
-    try {
-        const post = await Post.findById(req.params.id);
-        if (!post) return res.status(404).json({ message: "Post not found" });
+        const { postId } = req.query;
 
-        if (post.createdBy.toString() !== req.user.id) {
-            return res.status(403).json({ message: "Not authorized" });
-        }
+  if (!postId) {
+    return res.status(400).json({ error: 'postId is required' });
+  }
 
-        await post.remove();
-        res.json({ message: "Post deleted" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+  try {
+    const deletedPost = await Post.findByIdAndDelete(postId);
+    
+    if (!deletedPost) {
+      return res.status(404).json({ error: 'Post not found' });
     }
+
+    res.status(200).json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    res.status(500).json({ error: 'Failed to delete post' });
+  }
 };
 
 export const likePost = async (req, res) => {

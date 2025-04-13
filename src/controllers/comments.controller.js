@@ -64,17 +64,32 @@ export const updateComment = async (req, res) => {
 
 export const deleteComment = async (req, res) => {
     try {
-        const comment = await Comment.findById(req.params.id);
-        if (!comment) return res.status(404).json({ message: "Comment not found" });
+        const { id } = req.query;
+        if (!id) {
+            console.error("Comment ID not provided");
+            return res.status(400).json({ message: "Comment ID is required" });
+        }
 
-        if (comment.userId.toString() !== req.user.id)
+        const comment = await Comment.findById(id);
+        if (!comment) {
+            console.error("Comment not found");
+            return res.status(404).json({ message: "Comment not found" });
+        }
+
+        if (comment.userId.toString() !== req.user.id) {
+            console.error("Unauthorized deletion attempt by user:", req.user.id);
             return res.status(403).json({ message: "Unauthorized" });
+        }
 
-        await Comment.deleteMany({ parentId: comment._id }); // delete replies
-        await comment.remove();
+        // ✅ Delete child comments first
+        await Comment.deleteMany({ parentId: comment._id });
 
-        res.json({ message: "Comment deleted" });
+        // ✅ Then delete the comment itself
+        await Comment.findByIdAndDelete(comment._id);
+
+        return res.json({ message: "Comment deleted" });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Error while deleting comment:", err);
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 };

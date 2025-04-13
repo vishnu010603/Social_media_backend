@@ -14,7 +14,7 @@ const router = express.Router();
 router.post("/", auth, upload.single("image"), createPost);
 router.get("/", auth, getPosts);
 router.put("/:id", auth, upload.single("image"), updatePost);
-router.delete("/:id", auth, deletePost);
+router.delete("/", auth, deletePost);
 router.put("/:id/like", auth, likePost);
 
 export default router;

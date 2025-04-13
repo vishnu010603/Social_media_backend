@@ -8,7 +8,7 @@ import auth from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/signup", signup);
+router.post("/signup", upload.single("profilePic"), signup); 
 router.post("/login", login);
 router.put("/profile-pic", auth, upload.single("profilePic"), updateProfilePic);
 
